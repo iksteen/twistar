@@ -108,7 +108,7 @@ class BelongsTo(Relationship):
         subquery = deepDictToWhere(otherklass, {name: value})
         return ['(%s IN (SELECT id FROM %s WHERE %s))' % (
             othername,
-            otherklass.TABLENAME,
+            otherklass.tablename(),
             subquery[0]
         )] + subquery[1:]
 
@@ -221,7 +221,7 @@ class HasMany(Relationship):
         subquery = deepDictToWhere(otherklass, {name: value})
         return ['(id IN (SELECT %s FROM %s WHERE %s))' % (
             thisname,
-            otherklass.TABLENAME,
+            otherklass.tablename(),
             subquery[0]
         )] + subquery[1:]
 
