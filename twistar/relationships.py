@@ -251,6 +251,20 @@ class HasOne(Relationship):
         where = ["id = ?", other.id]        
         return self.dbconfig.update(tablename, args, where)
 
+    @classmethod
+    def where(cls, propname, args, name, value):
+        infl = Inflector()
+        otherklassname = infl.classify(args.get('class_name', propname))
+        otherklass = Registry.getClass(otherklassname)
+        thisname = args.get('foreign_key', infl.foreignKey(cls.__name__))
+
+        subquery = deepDictToWhere(otherklass, {name: value})
+        return ['(id IN (SELECT %s FROM %s WHERE %s))' % (
+            thisname,
+            otherklass.tablename(),
+            subquery[0]
+        )] + subquery[1:]
+
 
 class HABTM(Relationship):
     """
