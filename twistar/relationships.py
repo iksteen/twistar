@@ -7,7 +7,7 @@ from twisted.internet import defer
 from BermiInflector.Inflector import Inflector
 
 from twistar.registry import Registry
-from twistar.utils import createInstances, joinWheres
+from twistar.utils import createInstances, joinWheres, deepDictToWhere
 from twistar.exceptions import ReferenceNotSavedError
 
 
@@ -98,6 +98,19 @@ class BelongsTo(Relationship):
         setattr(self.inst, self.othername, None)
         return self.inst.save()
 
+    @staticmethod
+    def where(propname, args, name, value):
+        infl = Inflector()
+        otherklassname = infl.classify(args.get('class_name', propname))
+        otherklass = Registry.getClass(otherklassname)
+        othername = args.get('association_foreign_key', infl.foreignKey(infl.singularize(propname)))
+
+        subquery = deepDictToWhere(otherklass, {name: value})
+        return ['(%s IN (SELECT id FROM %s WHERE %s))' % (
+            othername,
+            otherklass.TABLENAME,
+            subquery[0]
+        )] + subquery[1:]
 
 
 class HasMany(Relationship):
@@ -197,6 +210,21 @@ class HasMany(Relationship):
         """
         return self.set([])
         
+
+    @classmethod
+    def where(cls, propname, args, name, value):
+        infl = Inflector()
+        otherklassname = infl.classify(args.get('class_name', propname))
+        otherklass = Registry.getClass(otherklassname)
+        thisname = args.get('foreign_key', infl.foreignKey(cls.__name__))
+
+        subquery = deepDictToWhere(otherklass, {name: value})
+        return ['(id IN (SELECT %s FROM %s WHERE %s))' % (
+            thisname,
+            otherklass.TABLENAME,
+            subquery[0]
+        )] + subquery[1:]
+
 
 class HasOne(Relationship):
     """

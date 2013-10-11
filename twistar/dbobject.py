@@ -8,7 +8,7 @@ from twisted.internet import defer
 from twistar.registry import Registry
 from twistar.relationships import Relationship
 from twistar.exceptions import InvalidRelationshipError, DBObjectSaveError, ReferenceNotSavedError
-from twistar.utils import createInstances, deferredDict, dictToWhere, transaction
+from twistar.utils import createInstances, deferredDict, dictToWhere, transaction, deepDictToWhere
 from twistar.validation import Validator, Errors
 
 from BermiInflector.Inflector import Inflector
@@ -363,6 +363,12 @@ class DBObject(Validator):
             inf = Inflector()
             klass.TABLENAME = inf.tableize(klass.__name__)
         return klass.TABLENAME
+
+
+    @classmethod
+    def findDeep(cls, **attrs):
+        where = deepDictToWhere(cls, attrs)
+        return cls.find(where=where)
 
 
     @classmethod

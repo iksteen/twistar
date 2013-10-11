@@ -129,3 +129,22 @@ def deferredDict(d):
     
     dl = defer.DeferredList(d.values())
     return dl.addCallback(handle, d.keys())
+
+
+def deepDictToWhere(cls, attrs):
+    if cls.RELATIONSHIP_CACHE is None:
+        cls.initRelationshipCache()
+
+    wheres = []
+    for name, value in attrs.items():
+        path = name.split('__', 1)
+
+        if len(path) == 1:
+            wheres.append("(%s = ?)" % name)
+            continue
+
+        propname, rel_name = path
+        relation, args = cls.RELATIONSHIP_CACHE[propname]
+        wheres.append(relation.where(propname, args, rel_name, value)[0])
+
+    return [" AND ".join(wheres)] + attrs.values()
