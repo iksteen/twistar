@@ -366,12 +366,6 @@ class DBObject(Validator):
 
 
     @classmethod
-    def findDeep(cls, **attrs):
-        where = deepDictToWhere(cls, attrs)
-        return cls.find(where=where)
-
-
-    @classmethod
     def findOrCreate(klass, **attrs):
         """
         Find all instances of a given class based on the attributes given (just like C{findBy}).
@@ -392,13 +386,15 @@ class DBObject(Validator):
     def findBy(klass, **attrs):
         """
         Find all instances of the given class based on an exact match of attributes.
+        Can also find by related fields.
 
         For instance:
         C{User.find(first_name='Bob', last_name='Smith')}
+        C{User.find(company__name='Bob Inc.')}
 
         Will return all matches.
         """
-        where = dictToWhere(attrs)
+        where = deepDictToWhere(klass, attrs)
         return klass.find(where = where)
 
 
